@@ -22,7 +22,7 @@ class TipNet(gym.Env):
     metadata = {'render.modes': ['human']}
     np.seterr(divide='ignore', invalid='ignore')
 
-    def __init__(self):
+    def __init__(self, target_state=None):
         self.controller_name = "TipNet"
         IO.connect()
         self.scan_bias_voltage = -3.5
@@ -34,15 +34,21 @@ class TipNet(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(17,), dtype=np.float32)
         self.action_space = spaces.Discrete(24)
 
+        self.target_state = target_state
+
     def step(self, action):
         self._take_action(action)
         self.improver.step()
         obs = self.improver.raw_log.tail(1)
 
-        state_feature_obs = 1 ##### TODO
+        state_feature_obs = 1  ##### TODO
         reward = CoachCSV(obs)
 
-        done = False
+        # Done if last 20 lines are what we want
+        if self.improver.raw_log.tail(20) is True:  #####TODO
+            done = True
+        else:
+            done = False
 
         return obs, reward, done, {}
 
@@ -69,6 +75,9 @@ class TipNet(gym.Env):
 
     def reset(self):
         self.improver.reset()
+        obs = self.improver.raw_log.tail(1)
+
+        return obs
 
     def render(self, mode='human', close=False):
         self.improver.render()
