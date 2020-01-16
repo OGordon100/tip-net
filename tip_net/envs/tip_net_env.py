@@ -8,8 +8,14 @@ from nOmicron.microscope.conditioning import tip_pulse, tip_crash
 
 try:
     from MicroscopeFuncs.coarse_improvements import ImprovementController
+    from NetworkFuncs.make_coach_CSV import CoachCSV
 except ImportError:
-    sys.path.insert(1, '/home/mltest1/tmp/pycharm_project_510')
+    for strng in ['/home/mltest1/tmp/pycharm_project_510', '../Autonomous-Probes']:
+        try:
+            sys.path.insert(1, strng)
+            break
+        except ImportError:
+            pass
 
 
 class TipNet(gym.Env):
@@ -32,7 +38,9 @@ class TipNet(gym.Env):
         self._take_action(action)
         self.improver.step()
         obs = self.improver.raw_log.tail(1)
-        reward = self.calc_reward(obs)
+
+        state_feature_obs = 1 ##### TODO
+        reward = CoachCSV(obs)
 
         done = False
 
