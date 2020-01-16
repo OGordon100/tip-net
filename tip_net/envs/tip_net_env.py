@@ -6,8 +6,10 @@ from gym import spaces
 from nOmicron.microscope import IO
 from nOmicron.microscope.conditioning import tip_pulse, tip_crash
 
-sys.path.insert(1, '/home/mltest1/tmp/pycharm_project_510')
-from MicroscopeFuncs.coarse_improvements import ImprovementController
+try:
+    from MicroscopeFuncs.coarse_improvements import ImprovementController
+except ImportError:
+    sys.path.insert(1, '/home/mltest1/tmp/pycharm_project_510')
 
 
 class TipNet(gym.Env):
@@ -28,7 +30,8 @@ class TipNet(gym.Env):
 
     def step(self, action):
         self._take_action(action)
-        obs = self.improver.step()
+        self.improver.step()
+        obs = self.improver.raw_log.tail(1)
         reward = self.calc_reward(obs)
 
         done = False
@@ -44,7 +47,7 @@ class TipNet(gym.Env):
         elif action == 1:
             self.improver.scan_pos.big_move_and_reset_size()
         elif action == 2:
-            self.improver.scan.pos.reduce_scan_size(scandata=self.improver.scan_prog.scan_matrix_raw[0, :, :])
+            self.improver.scan_pos.reduce_scan_size(scandata=self.improver.scan_prog.scan_matrix_raw[0, :, :])
         elif 3 <= action <= 13:
             intensities = np.arange(-10, 12, 2)
             pulse_intensity = intensities[action]
